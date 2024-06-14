@@ -1,0 +1,142 @@
+
+Home
+Contact
+Blog
+YouTube
+
+Deploy Vite React App to GitHub Pages
+Apr 26, 2024
+
+•
+
+#react
+
+#vite
+
+#github
+
+#git
+
+•
+
+2 mins read
+
+Create a new project
+Let’s start by scaffolding a new React project using Vite:
+
+npm create vite@latest
+Once the project is scaffolded, navigate to the project directory and install dependencies:
+
+cd vite-react-deploy
+npm install
+Create a new repository on GitHub:
+
+
+Initialize Git, commit all the files and push them to your new repo:
+
+git init
+git add -A
+git commit -m "first commit" 
+git branch -M main 
+git remote add origin https://github.com/[username]/[repo_name].git # Replace with your username and repo URL
+git push -u origin main
+We’ve just successfully pushed our project to GitHub:
+
+
+Set base path in vite.config.ts
+If you won’t do this, you get a 404 error for each asset in your project:
+
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  base: "/vite-react-deploy/", // YOUR REPO NAME HERE
+});
+
+Add a GitHub workflow
+Create a deploy.yml file inside the .github/workflows directory.
+
+Copy and paste this workflow:
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+
+      - name: Install dependencies
+        uses: bahmutov/npm-install@v1
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload production-ready build files
+        uses: actions/upload-artifact@v3
+        with:
+          name: production-files
+          path: ./dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: production-files
+          path: ./dist
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+Push those changes:
+
+git add -A
+git commit -m "deploy config" 
+git push
+On your repo page:
+Go to Settings → Actions → General,
+Scroll down to Workflow Permissions,
+Choose Read and Write, and save:
+
+Re-run actions
+Actions → choose a failed deployment → Re-run failed jobs. Wait until in finishes.
+
+
+Configure GitHub Pages:
+Go to Settings → Pages
+Under Source, choose "Deploy from branch" and select the "gh-pages" branch.
+Click Save.
+
+Once the workflow finishes successfully, you'll see a new deployment on your GitHub Pages. Click the link to access your deployed Vite React application!
+
+
+Share
+
+
+
+
+
+Back To Blog
+© Copyright 2024 | Vladyslav Dihtiarenko | All Rights Reserved
